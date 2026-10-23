@@ -3,21 +3,24 @@ import type { LlmAdapter } from "./adapter.ts"
 import { AnthropicAdapter } from "./anthropic.ts"
 import { OpenAiAdapter } from "./openai.ts"
 
-const MODELO_POR_DEFECTO: Record<string, string> = {
-  anthropic: "claude-haiku-4-5",
-  openai: "gpt-4.1-mini",
+type Proveedor = { clave: string; modelo: string; baseUrl?: string }
+
+/** Proveedores soportados. Gemini y Groq usan su API compatible con OpenAI y tienen nivel gratuito. */
+const PROVEEDORES: Record<string, Proveedor> = {
+  gemini: { clave: "GEMINI_API_KEY", modelo: "gemini-2.5-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai" },
+  groq: { clave: "GROQ_API_KEY", modelo: "llama-3.3-70b-versatile", baseUrl: "https://api.groq.com/openai/v1" },
+  anthropic: { clave: "ANTHROPIC_API_KEY", modelo: "claude-haiku-4-5" },
+  openai: { clave: "OPENAI_API_KEY", modelo: "gpt-4.1-mini", baseUrl: "https://api.openai.com/v1" },
 }
 
 export function crearAdaptador(env: Record<string, string | undefined>): { llm: LlmAdapter | null; motivo: string } {
-  const proveedor = (env.LLM_PROVIDER ?? "anthropic").toLowerCase()
-  const modelo = env.LLM_MODEL || MODELO_POR_DEFECTO[proveedor] || ""
-  if (proveedor === "anthropic") {
-    if (!env.ANTHROPIC_API_KEY) return { llm: null, motivo: "Falta ANTHROPIC_API_KEY en el entorno del backend." }
-    return { llm: new AnthropicAdapter(env.ANTHROPIC_API_KEY, modelo, env.LLM_BASE_URL || undefined), motivo: "" }
-  }
-  if (proveedor === "openai") {
-    if (!env.OPENAI_API_KEY) return { llm: null, motivo: "Falta OPENAI_API_KEY en el entorno del backend." }
-    return { llm: new OpenAiAdapter(env.OPENAI_API_KEY, modelo, env.LLM_BASE_URL || undefined), motivo: "" }
-  }
-  return { llm: null, motivo: `Proveedor "${proveedor}" no soportado. Usa anthropic u openai.` }
+  const nombre = (env.LLM_PROVIDER ?? "gemini").toLowerCase()
+  const p = PROVEEDORES[nombre]
+  if (!p) return { llm: null, motivo: `Proveedor "${nombre}" no soportado. Usa: ${Object.keys(PROVEEDORES).join(", ")}.` }
+  const clave = env[p.clave]
+  if (!clave) return { llm: null, motivo: `Falta ${p.clave} en el entorno del backend.` }
+  const modelo = env.LLM_MODEL || p.modelo
+  const baseUrl = env.LLM_BASE_URL || p.baseUrl
+  if (nombre === "anthropic") return { llm: new AnthropicAdapter(clave, modelo, env.LLM_BASE_URL || undefined), motivo: "" }
+  return { llm: new OpenAiAdapter(clave, modelo, baseUrl, nombre), motivo: "" }
 }

@@ -19,8 +19,8 @@ La analista administrativa digita a mano cada orden de compra en SAP y valida de
 │ web/ (HTML + JS)      │ ──────────────────▶ │ src/server.ts  (Bun.serve)                         │
 │ · historial           │ ◀────────────────── │   └─ src/agent/ciclo.ts   ciclo del agente         │
 │ · tarjetas de tools   │  reply, toolCalls,  │        ├─ src/llm/adapter.ts  interfaz enviar()    │
-│ · banner confirmación │  needsConfirmation  │        │    ├─ anthropic.ts   (por defecto)         │
-│ · log de control      │                     │        │    └─ openai.ts      (alternativa)         │
+│ · banner confirmación │  needsConfirmation  │        │    ├─ openai.ts  Gemini (defecto), Groq   │
+│ · log de control      │                     │        │    └─ anthropic.ts  Claude                │
 └───────────────────────┘                     │        ├─ src/agent/herramientas.ts  registro + zod │
                                               │        └─ src/agent/sesiones.ts  memoria + archivo  │
                                               └───────────────┬────────────────────────────────────┘
@@ -75,10 +75,10 @@ El servidor concatena prompt + conocimiento en cada turno (se leen del disco, as
 
 | | |
 |---|---|
-| **Proveedor / modelo** | Anthropic · `claude-haiku-4-5` (configurable con `LLM_PROVIDER` y `LLM_MODEL`). Alternativa implementada: OpenAI (`gpt-4.1-mini`) o cualquier API compatible vía `LLM_BASE_URL`. |
-| **Por qué** | El trabajo pesado (lectura, reglas, cálculos, payload) es determinista y vive en las herramientas. El modelo solo orquesta el flujo, decide cuándo preguntar y redacta. Para eso un modelo rápido y económico con buen uso de herramientas es suficiente; si en la defensa se requiere más razonamiento, se cambia a un modelo mayor con una variable de entorno, sin tocar código. |
-| **Optimización de costo** | El system prompt (prompt + conocimiento, ~2.000 tokens) se marca con `cache_control` para caché de Anthropic. Las herramientas reciben solo `caso`, no el paquete completo, lo que evita que el modelo reenvíe JSON grandes. |
-| **Costo estimado por caso** | Medido con el historial real de una sesión: un caso completo usa ~5 llamadas al modelo y ~23.000 tokens de entrada acumulados + ~1.500 de salida. A precio de lista de Haiku 4.5 (USD 1 / 5 por millón de tokens de entrada / salida, a verificar al momento de la defensa) son **≈ USD 0,03 por caso**, menos con la caché. Con un modelo de gama media (USD 3 / 15) serían ≈ USD 0,09. |
+| **Proveedor / modelo** | Google · `gemini-2.5-flash` a través de su API compatible con OpenAI (configurable con `LLM_PROVIDER` y `LLM_MODEL`). Implementados y seleccionables por variable de entorno: Groq (`llama-3.3-70b-versatile`), Anthropic (`claude-haiku-4-5`) y OpenAI (`gpt-4.1-mini`). |
+| **Por qué** | El trabajo pesado (lectura, reglas, cálculos, payload) es determinista y vive en las herramientas. El modelo solo orquesta el flujo, decide cuándo preguntar y redacta. Para eso basta un modelo rápido con buen uso de herramientas. Gemini Flash cumple eso y tiene nivel gratuito, lo que permite dejar el link público activo sin costo durante la evaluación. Si se requiere más razonamiento, se cambia de modelo o de proveedor con una variable de entorno, sin tocar código; esa es justamente la prueba de que el adaptador está bien aislado. |
+| **Optimización de costo** | Las herramientas reciben solo `caso`, no el paquete completo, lo que evita que el modelo reenvíe JSON grandes. Con Anthropic, además, el system prompt se marca con `cache_control`. |
+| **Costo estimado por caso** | Medido con el historial real de una sesión: un caso completo usa ~5 llamadas al modelo y ~23.000 tokens de entrada acumulados + ~1.500 de salida. En el nivel gratuito de Gemini el costo es **USD 0** (limitado por cuotas de peticiones por minuto y por día). En nivel pago, a precios de lista de modelos "flash/haiku" (≈ USD 0,3–1 por millón de tokens de entrada y 2,5–5 de salida, a verificar al momento de la defensa), son **≈ USD 0,01–0,03 por caso**. |
 | **Topes de gasto** | `MAX_ITERACIONES` por turno, `MAX_TOKENS_SESION` por sesión, `MAX_TOKENS_RESPUESTA` por llamada, mensajes de máximo 2.000 caracteres y clave de acceso opcional (`APP_ACCESS_KEY`) para el link público. |
 
 ---
@@ -194,7 +194,7 @@ La decisión de tolerar o rechazar retroactivas es de la dirección; el agente l
 |---|---|---|---|
 | 1 | Las herramientas **releen siempre los documentos**; `paquete`, `derivados` y `payload` son opcionales y solo se aceptan si coinciden con lo real. | Que el modelo pase el paquete completo entre herramientas (literal del contrato). | Pasar JSON grandes cuesta tokens y abre la puerta a que el modelo altere un monto. Se mantiene la firma del contrato, pero la fuente de verdad son los archivos. |
 | 2 | La **confirmación humana la registra el backend** a partir del mensaje de la analista; `confirmado: true` sin ese registro se rechaza. | Confiar en que el modelo solo pase `confirmado: true` cuando corresponde. | Un prompt es una instrucción, no un control. Crear una OC es una acción con efecto contable: el control debe estar en el código. |
-| 3 | **`fetch` directo** a la API del proveedor con una interfaz propia `LlmAdapter`. | Vercel AI SDK o LangChain. | El reto evalúa el ciclo del agente: implementarlo explícito (≈150 líneas) lo hace auditable y explicable línea por línea, y evita dependencias pesadas. Cambiar de proveedor es agregar un archivo. |
+| 3 | **`fetch` directo** a la API del proveedor con una interfaz propia `LlmAdapter`. | Vercel AI SDK o LangChain. | El reto evalúa el ciclo del agente: implementarlo explícito (≈150 líneas) lo hace auditable y explicable línea por línea, y evita dependencias pesadas. Un solo adaptador compatible con OpenAI cubre Gemini, Groq y OpenAI; Anthropic tiene el suyo. |
 | 4 | **Front en HTML + JS plano**, sin build, con un renderizador de Markdown propio y seguro (escapa HTML). | React + Vite; `marked` desde CDN. | Un solo comando para levantar, cero pasos de compilación y el chat funciona aunque no haya CDN. |
 | 5 | **Precio de la OC = valor de la solicitud** (lo aprobado), aunque la cotización difiera; la diferencia queda como excepción confirmada. | Usar el valor de la cotización. | El líder aprobó un monto (en sol-004 lo dice: "Aprobado por 25 millones"). Crear la OC por más sería exceder la aprobación; si se necesita el valor de la cotización, debe re-aprobarse. |
 | 6 | `out/control.csv` registra **eventos** desde `oc_validar` (bloqueada / pendiente) y `oc_crear` (creada / idempotente / rechazada). | Registrar solo en `oc_crear`. | Una solicitud bloqueada nunca llega a `oc_crear`; si solo se registrara ahí, los bloqueos no se medirían. El resumen toma el último estado por solicitud. |
@@ -263,7 +263,7 @@ La decisión de tolerar o rechazar retroactivas es de la dirección; el agente l
 | Documentos reales (PDF escaneados, Excel con formatos distintos) que no se leen bien. | Extracción con validación de esquema y umbral: si un campo crítico no se lee con confianza, se pide revisión en lugar de suponer. Empezar con plantillas de Excel controladas. |
 | Maestros desactualizados (proveedor inactivado hoy en SAP). | Consultar maestros en SAP en línea (`consultarProveedor`) en lugar de archivos; caché corta. |
 | Costo descontrolado del modelo o abuso del link. | Topes por turno y sesión, clave de acceso, autenticación corporativa (Entra ID) en producción, monitoreo de tokens por usuario. |
-| Fuga de datos sensibles (NIT, montos) hacia el proveedor del modelo. | Contrato empresarial sin retención de datos o despliegue en Azure OpenAI / Bedrock dentro del tenant; los logs no guardan claves. |
+| Fuga de datos sensibles (NIT, montos) hacia el proveedor del modelo. | El nivel gratuito de Gemini puede usar los datos para mejorar productos: sirve para la prueba con datos ficticios, no para producción. En producción, nivel pago o contrato empresarial sin retención, o despliegue en Azure OpenAI / Bedrock / Vertex dentro del tenant; los logs no guardan claves. |
 | Doble creación por reintentos. | Idempotencia por `solicitud_id` en el adaptador y en SAP (referencia externa) + outbox. |
 | Evidencia de aprobación insuficiente para auditoría. | Hash sha256 adjunto en SAP; evolucionar a aprobación con firma o flujo de aprobación en el sistema. |
 | Las reglas cambian (nuevos topes, nuevos centros). | Reglas aisladas en `src/core/controles.ts` con pruebas por caso; conocimiento y comportamiento en Markdown editable. |

@@ -7,11 +7,11 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: LLM_PROVIDER
-        value: anthropic
-      - key: LLM_MODEL
-        value: claude-haiku-4-5
-      - key: ANTHROPIC_API_KEY
+        value: gemini
+      - key: GEMINI_API_KEY
         sync: false   # se escribe en el panel de Render; nunca en el repositorio
+      - key: LLM_MODEL
+        sync: false   # opcional
       - key: MAX_ITERACIONES
         value: "25"
       - key: MAX_TOKENS_SESION

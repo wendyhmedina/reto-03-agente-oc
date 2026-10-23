@@ -9,7 +9,7 @@ Agente conversacional que lee el paquete de una solicitud de compra, lo valida c
 Requisitos: [Bun](https://bun.sh) 1.1 o superior.
 
 ```bash
-cp .env.example .env        # y escribe tu ANTHROPIC_API_KEY (u OPENAI_API_KEY con LLM_PROVIDER=openai)
+cp .env.example .env        # y escribe tu GEMINI_API_KEY (gratis en https://aistudio.google.com/apikey)
 bun install && bun run dev  # http://localhost:3000
 ```
 
@@ -19,10 +19,10 @@ Bun carga `.env` automáticamente. Sin clave el chat abre y avisa que el modelo 
 
 | Variable | Obligatoria | Descripción |
 |---|---|---|
-| `LLM_PROVIDER` | No (`anthropic`) | `anthropic` u `openai`. |
-| `LLM_MODEL` | No | Por defecto `claude-haiku-4-5` / `gpt-4.1-mini`. |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Sí (la del proveedor elegido) | Solo vive en el backend. Nunca va al front, al repositorio ni a los logs. |
-| `LLM_BASE_URL` | No | Para APIs compatibles (Azure OpenAI, modelos locales). |
+| `LLM_PROVIDER` | No (`gemini`) | `gemini` (nivel gratuito), `groq` (nivel gratuito), `anthropic` u `openai`. |
+| `LLM_MODEL` | No | Por defecto `gemini-2.5-flash` / `llama-3.3-70b-versatile` / `claude-haiku-4-5` / `gpt-4.1-mini`. |
+| `GEMINI_API_KEY` / `GROQ_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Sí (solo la del proveedor elegido) | Solo vive en el backend. Nunca va al front, al repositorio ni a los logs. |
+| `LLM_BASE_URL` | No | Para otras APIs compatibles con OpenAI (Azure OpenAI, modelos locales). |
 | `LLM_TIMEOUT_MS` | No (`60000`) | Timeout por llamada al modelo. |
 | `MAX_ITERACIONES` | No (`25`) | Tope de pasos herramienta → modelo por turno. |
 | `MAX_TOKENS_SESION` | No (`300000`) | Tope de tokens por sesión. |
@@ -65,7 +65,7 @@ Si `APP_ACCESS_KEY` está definida, las rutas `/api/*` (salvo `health`) exigen e
 
 1. Sube el repositorio a GitHub.
 2. En [render.com](https://render.com): **New → Blueprint** y selecciona el repositorio (usa `render.yaml` y el `Dockerfile`).
-3. Escribe `ANTHROPIC_API_KEY` (y opcionalmente `APP_ACCESS_KEY`) en el panel de variables.
+3. Escribe `GEMINI_API_KEY` (y opcionalmente `APP_ACCESS_KEY`) en el panel de variables.
 4. Cuando termine el build, copia la URL en la parte superior de este README.
 
 Cualquier plataforma que corra Docker sirve igual (Railway, Fly.io, Azure Container Apps). El plan gratuito de Render se duerme tras 15 min sin uso: abre el link unos minutos antes de la defensa.
@@ -78,7 +78,7 @@ src/knowledge/ordenes-compra.md conocimiento del proceso
 src/tools/oc.ts                 herramientas (cada export → oc_<export>)
 src/core/                       reglas RC1–RC10, parsers, payload, evidencia, log de control
 src/sap/adapter.ts · mock.ts    interfaz SapAdapter y SAP simulado sobre out/sap/
-src/llm/                        interfaz LlmAdapter + Anthropic + OpenAI
+src/llm/                        interfaz LlmAdapter + Anthropic + compatibles OpenAI (Gemini, Groq, OpenAI)
 src/agent/                      ciclo del agente, registro de herramientas, sesiones
 src/server.ts                   API HTTP + front estático
 web/                            chat (HTML + JS sin build)

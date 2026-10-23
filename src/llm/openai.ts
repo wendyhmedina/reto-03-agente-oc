@@ -1,5 +1,5 @@
-// Implementación de LlmAdapter para Chat Completions de OpenAI (o compatibles: Azure OpenAI, modelos locales
-// con API compatible, vía LLM_BASE_URL). Existe para demostrar que cambiar de proveedor no toca el ciclo.
+// Implementación de LlmAdapter para Chat Completions de OpenAI y APIs compatibles (Google Gemini, Groq,
+// Azure OpenAI, modelos locales). Cambiar de proveedor no toca el ciclo del agente.
 import { type LlmAdapter, type Mensaje, type HerramientaSpec, type OpcionesEnvio, type RespuestaLlm, type ToolCall, errorHttp, fetchConTimeout, LlmError } from "./adapter.ts"
 
 type MensajeOpenAi =
@@ -39,30 +39,36 @@ function parsearArgs(texto: string): Record<string, unknown> {
 }
 
 export class OpenAiAdapter implements LlmAdapter {
-  readonly provider = "openai"
-  constructor(private readonly apiKey: string, readonly model: string, private readonly baseUrl = "https://api.openai.com/v1") {}
+  constructor(
+    private readonly apiKey: string,
+    readonly model: string,
+    private readonly baseUrl = "https://api.openai.com/v1",
+    readonly provider = "openai",
+  ) {}
 
   async enviar(mensajes: Mensaje[], herramientas: HerramientaSpec[], op: OpcionesEnvio): Promise<RespuestaLlm> {
-    const res = await fetchConTimeout("OpenAI", `${this.baseUrl}/chat/completions`, {
+    const res = await fetchConTimeout(this.provider, `${this.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${this.apiKey}` },
       body: JSON.stringify({
         model: this.model,
-        max_completion_tokens: op.maxTokens,
+        // OpenAI usa max_completion_tokens; las APIs compatibles (Gemini, Groq) aceptan max_tokens.
+        ...(this.provider === "openai" ? { max_completion_tokens: op.maxTokens } : { max_tokens: op.maxTokens }),
         messages: aMensajesOpenAi(op.system, mensajes),
         tools: herramientas.map((h) => ({ type: "function", function: { name: h.name, description: h.description, parameters: h.parameters } })),
       }),
     }, op.signal)
-    if (!res.ok) throw errorHttp("OpenAI", res.status)
+    if (!res.ok) throw errorHttp(this.provider, res.status)
     let data: RespuestaApi
     try {
       data = (await res.json()) as RespuestaApi
     } catch {
-      throw new LlmError("OpenAI: la respuesta del modelo no es JSON válido.")
+      throw new LlmError(`${this.provider}: la respuesta del modelo no es JSON válido.`)
     }
     const msg = data.choices[0]?.message
-    if (!msg) throw new LlmError("OpenAI: respuesta vacía del modelo.")
-    const toolCalls: ToolCall[] = (msg.tool_calls ?? []).map((t) => ({ id: t.id, name: t.function.name, args: parsearArgs(t.function.arguments) }))
+    if (!msg) throw new LlmError(`${this.provider}: respuesta vacía del modelo.`)
+    // Algunos proveedores compatibles no envían id en la llamada: se genera uno para enlazar el resultado.
+    const toolCalls: ToolCall[] = (msg.tool_calls ?? []).map((t, i) => ({ id: t.id || `call_${Date.now()}_${i}`, name: t.function.name, args: parsearArgs(t.function.arguments) }))
     return { texto: (msg.content ?? "").trim(), toolCalls, uso: { entrada: data.usage?.prompt_tokens ?? 0, salida: data.usage?.completion_tokens ?? 0 } }
   }
 }

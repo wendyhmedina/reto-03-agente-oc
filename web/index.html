@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agente OC · SAP</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23073736'/><text x='16' y='22' font-size='15' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>OC</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="marca">
+      <span class="logo">OC</span>
+      <div>
+        <h1>Agente de Órdenes de Compra</h1>
+        <p class="sub">Lee el paquete · valida controles · crea la OC en SAP (simulado)</p>
+      </div>
+    </div>
+    <div class="acciones">
+      <span id="estado-modelo" class="pill">conectando…</span>
+      <button id="nueva-sesion" class="btn-sec" type="button">Nueva sesión</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel">
+      <section>
+        <h2>Solicitudes</h2>
+        <div id="casos" class="casos"></div>
+        <button id="demo-prompt" class="btn-link" type="button">Usar el prompt de la demo (sol-004)</button>
+      </section>
+      <section>
+        <h2>Log de control</h2>
+        <dl id="control" class="control">
+          <div><dt>Solicitudes</dt><dd id="c-sol">0</dd></div>
+          <div><dt>OC creadas</dt><dd id="c-cre">0</dd></div>
+          <div><dt>Retroactivas</dt><dd id="c-ret">0</dd></div>
+        </dl>
+        <p class="nota" id="c-pct"></p>
+      </section>
+      <section class="leyenda">
+        <h2>Cómo leer el chat</h2>
+        <p><span class="chip ok">herramienta</span> cada llamada del agente, con argumentos y resultado.</p>
+        <p><span class="chip conf">confirmación</span> el agente se detiene y espera tu respuesta.</p>
+        <p class="nota">Sesión <code id="sesion-id"></code></p>
+      </section>
+    </aside>
+
+    <main class="chat">
+      <div id="mensajes" class="mensajes" aria-live="polite">
+        <div class="vacio" id="vacio">
+          <h3>¿Qué solicitud procesamos?</h3>
+          <p>Escribe, por ejemplo, <em>“Procesa la solicitud sol-001”</em>, o elige un caso a la izquierda.</p>
+        </div>
+      </div>
+
+      <div id="banner-conf" class="banner-conf" hidden>
+        <div>
+          <strong>El agente espera tu confirmación</strong>
+          <span id="banner-casos"></span>
+        </div>
+        <div class="banner-btns">
+          <button id="btn-confirmo" type="button" class="btn-conf">Confirmo, crear la OC</button>
+          <button id="btn-no" type="button" class="btn-sec">No crear</button>
+        </div>
+      </div>
+
+      <form id="form" class="entrada">
+        <textarea id="texto" rows="2" placeholder="Escribe al agente… (Enter envía, Shift+Enter salta línea)" maxlength="2000"></textarea>
+        <button id="enviar" type="submit" class="btn-pri">Enviar</button>
+      </form>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

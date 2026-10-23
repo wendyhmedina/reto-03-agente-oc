@@ -1,8 +1,8 @@
 # Imagen de despliegue: front + backend en un solo proceso Bun.
-FROM oven/bun:1.2-slim
+FROM oven/bun:1
 WORKDIR /app
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile --production
+RUN bun install --production
 COPY agent ./agent
 COPY src ./src
 COPY web ./web

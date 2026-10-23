@@ -2,7 +2,7 @@
 
 Agente conversacional que lee el paquete de una solicitud de compra, lo valida contra maestros y controles (RC1–RC10), muestra la OC tal como quedaría en SAP, genera la evidencia de aprobación (TXT + PDF con sha256) y crea la OC en un SAP simulado, pidiendo confirmación humana para las excepciones. El planteamiento completo está en [`SOLUCION.md`](SOLUCION.md).
 
-**Link de prueba:** `https://<pendiente>.onrender.com` · **Clave de acceso:** `<si se configura APP_ACCESS_KEY>`
+**Link de prueba:** https://agente-oc-reto03.onrender.com (plan gratuito de Render: si estuvo inactivo, la primera carga tarda unos 50 segundos)
 
 ## Levantar en local (un comando)
 

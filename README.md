@@ -20,7 +20,7 @@ Bun carga `.env` automáticamente. Sin clave el chat abre y avisa que el modelo 
 | Variable | Obligatoria | Descripción |
 |---|---|---|
 | `LLM_PROVIDER` | No (`gemini`) | `gemini` (nivel gratuito), `groq` (nivel gratuito), `anthropic` u `openai`. |
-| `LLM_MODEL` | No | Por defecto `gemini-2.5-flash` / `llama-3.3-70b-versatile` / `claude-haiku-4-5` / `gpt-4.1-mini`. |
+| `LLM_MODEL` | No | Por defecto `gemini-3.8-flash` / `openai/gpt-oss-120b` / `claude-haiku-4-5` / `gpt-4.1-mini`. |
 | `GEMINI_API_KEY` / `GROQ_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Sí (solo la del proveedor elegido) | Solo vive en el backend. Nunca va al front, al repositorio ni a los logs. |
 | `LLM_BASE_URL` | No | Para otras APIs compatibles con OpenAI (Azure OpenAI, modelos locales). |
 | `LLM_TIMEOUT_MS` | No (`60000`) | Timeout por llamada al modelo. |

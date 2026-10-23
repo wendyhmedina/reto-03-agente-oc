@@ -7,11 +7,13 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: LLM_PROVIDER
-        value: gemini
-      - key: GEMINI_API_KEY
+        value: groq
+      - key: GROQ_API_KEY
         sync: false   # se escribe en el panel de Render; nunca en el repositorio
       - key: LLM_MODEL
         sync: false   # opcional
+      - key: LLM_TIMEOUT_MS
+        value: "180000"   # el nivel gratuito limita tokens por minuto: el agente espera y reintenta
       - key: MAX_ITERACIONES
         value: "25"
       - key: MAX_TOKENS_SESION

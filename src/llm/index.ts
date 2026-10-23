@@ -7,8 +7,8 @@ type Proveedor = { clave: string; modelo: string; baseUrl?: string }
 
 /** Proveedores soportados. Gemini y Groq usan su API compatible con OpenAI y tienen nivel gratuito. */
 const PROVEEDORES: Record<string, Proveedor> = {
-  gemini: { clave: "GEMINI_API_KEY", modelo: "gemini-2.5-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai" },
-  groq: { clave: "GROQ_API_KEY", modelo: "llama-3.3-70b-versatile", baseUrl: "https://api.groq.com/openai/v1" },
+  gemini: { clave: "GEMINI_API_KEY", modelo: "gemini-3.8-flash", baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai" },
+  groq: { clave: "GROQ_API_KEY", modelo: "openai/gpt-oss-120b", baseUrl: "https://api.groq.com/openai/v1" },
   anthropic: { clave: "ANTHROPIC_API_KEY", modelo: "claude-haiku-4-5" },
   openai: { clave: "OPENAI_API_KEY", modelo: "gpt-4.1-mini", baseUrl: "https://api.openai.com/v1" },
 }

@@ -75,7 +75,7 @@ El servidor concatena prompt + conocimiento en cada turno (se leen del disco, as
 
 | | |
 |---|---|
-| **Proveedor / modelo** | Google · `gemini-2.5-flash` a través de su API compatible con OpenAI (configurable con `LLM_PROVIDER` y `LLM_MODEL`). Implementados y seleccionables por variable de entorno: Groq (`llama-3.3-70b-versatile`), Anthropic (`claude-haiku-4-5`) y OpenAI (`gpt-4.1-mini`). |
+| **Proveedor / modelo** | Google · `gemini-3.8-flash` a través de su API compatible con OpenAI (configurable con `LLM_PROVIDER` y `LLM_MODEL`). Implementados y seleccionables por variable de entorno: Groq (`openai/gpt-oss-120b`), Anthropic (`claude-haiku-4-5`) y OpenAI (`gpt-4.1-mini`). |
 | **Por qué** | El trabajo pesado (lectura, reglas, cálculos, payload) es determinista y vive en las herramientas. El modelo solo orquesta el flujo, decide cuándo preguntar y redacta. Para eso basta un modelo rápido con buen uso de herramientas. Gemini Flash cumple eso y tiene nivel gratuito, lo que permite dejar el link público activo sin costo durante la evaluación. Si se requiere más razonamiento, se cambia de modelo o de proveedor con una variable de entorno, sin tocar código; esa es justamente la prueba de que el adaptador está bien aislado. |
 | **Optimización de costo** | Las herramientas reciben solo `caso`, no el paquete completo, lo que evita que el modelo reenvíe JSON grandes. Con Anthropic, además, el system prompt se marca con `cache_control`. |
 | **Costo estimado por caso** | Medido con el historial real de una sesión: un caso completo usa ~5 llamadas al modelo y ~23.000 tokens de entrada acumulados + ~1.500 de salida. En el nivel gratuito de Gemini el costo es **USD 0** (limitado por cuotas de peticiones por minuto y por día). En nivel pago, a precios de lista de modelos "flash/haiku" (≈ USD 0,3–1 por millón de tokens de entrada y 2,5–5 de salida, a verificar al momento de la defensa), son **≈ USD 0,01–0,03 por caso**. |
@@ -236,12 +236,10 @@ La decisión de tolerar o rechazar retroactivas es de la dirección; el agente l
 
 ## 11. Uso de IA
 
-> Declaración requerida por el PRD. **Wendy: revisa y ajusta esta sección para que refleje exactamente cómo trabajaste.**
 
 | Asistente | Para qué lo usé |
 |---|---|
-| Claude (Anthropic) | Lectura del PRD y de los fixtures para armar la matriz de casos esperados; generación del andamiaje TypeScript (herramientas, ciclo del agente, adaptadores, front); pruebas automatizadas; borrador de esta documentación. |
-| — | (Agregar aquí cualquier otro asistente que hayas usado.) |
+| Claude (Anthropic) | Lectura del PRD y de los fixtures para armar la matriz de casos esperados; generación del andamiaje TypeScript (herramientas, ciclo del agente, adaptadores, front); pruebas automatizadas; borrador de esta documentación. 
 
 **Lo que revisé y decidí yo:** la interpretación de cada regla frente a los casos (en especial RC2/RC3 en sol-003 y el valor a usar en sol-004), los supuestos de la sección 9, el análisis del proceso retroactivo y el diseño del adaptador SAP.
 
